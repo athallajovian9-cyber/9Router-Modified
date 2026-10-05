@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0a0a">
+<title>9Router Modified - AI Infrastructure Management</title>
+<meta name="description" content="One endpoint for all your AI providers. Manage keys, monitor usage, and scale effortlessly.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--panel:#111114;--panel2:#18181b;--border:#27272a;
+  --text:#fafafa;--muted:#a1a1aa;--accent:#3b82f6;--green:#22c55e;
+  --red:#ef4444;--amber:#f59e0b;--cyan:#06b6d4;--violet:#8b5cf6;
+}
+html,body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:14px;height:100%;overflow:hidden}
+.msi{font-family:'Material Symbols Outlined';font-weight:400;font-style:normal;font-size:20px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased}
+.app{display:flex;height:100vh}
+/* Sidebar */
+.sidebar{width:240px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar-head{padding:16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.sidebar-logo{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--violet));display:grid;place-items:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0}
+.sidebar-title{font-weight:700;font-size:14px}
+.sidebar-ver{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;transition:all .15s;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.nav-item.active{background:rgba(59,130,246,.12);color:var(--accent)}
+.nav-item .msi{font-size:18px;flex-shrink:0}
+.nav-group{padding:14px 16px 6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#52525b}
+.sidebar-foot{padding:12px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:52px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.topbar-title{font-weight:700;font-size:15px}
+.topbar-right{display:flex;gap:12px;align-items:center}
+.icon-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--muted);display:grid;place-items:center;cursor:pointer;transition:.2s}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+.content{flex:1;overflow-y:auto;padding:24px}
+.page{display:none}
+.page.active{display:block}
+/* Cards */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.card-title{font-weight:700;font-size:15px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.card-sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:900px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+/* Stat cards */
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.stat-value{font-size:26px;font-weight:800;margin-top:6px;font-family:'JetBrains Mono',monospace}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+/* Provider rows */
+.prov-section{margin-bottom:24px}
+.prov-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.prov-header h3{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.btn-sm{background:var(--panel2);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;transition:.2s;font-weight:600}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+.prov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.prov-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:.2s;position:relative}
+.prov-card:hover{border-color:#3f3f46}
+.prov-name{font-weight:600;font-size:13px;margin-bottom:6px}
+.prov-status{font-size:11px;font-weight:600}
+.st-connected{color:var(--green)}.st-none{color:#52525b}.st-error{color:var(--red)}.st-ready{color:var(--cyan)}
+.prov-time{font-size:10px;color:#52525b;margin-top:4px}
+/* Toolbar */
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.search-box{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--text);font-size:13px;width:260px;outline:none}
+.search-box:focus{border-color:var(--accent)}
+.filter-btn{background:var(--panel2);border:1px solid var(--border);color:var(--muted);padding:7px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-weight:600;transition:.2s}
+.filter-btn.active,.filter-btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn-add{background:var(--accent);border:none;color:#fff;padding:7px 16px;border-radius:8px;font-size:12px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:6px;transition:.2s}
+.btn-add:hover{opacity:.85}
+/* Token saver */
+.saver-hero{background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(139,92,246,.12));border:1px solid rgba(59,130,246,.3);border-radius:16px;padding:28px;margin-bottom:20px}
+.saver-hero h2{font-size:22px;font-weight:800;margin-bottom:8px}
+.saver-hero p{color:var(--muted);font-size:13px;max-width:640px}
+.level-bar{display:flex;gap:8px;margin-top:18px}
+.level-btn{flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:.2s}
+.level-btn.active{border-color:var(--accent);background:rgba(59,130,246,.12)}
+.level-btn .lv{font-size:18px;font-weight:800;color:var(--accent);font-family:'JetBrains Mono',monospace}
+.level-btn .ld{font-size:11px;color:var(--muted);margin-top:4px}
+.switch{position:relative;width:44px;height:24px}
+.switch input{opacity:0;width:0;height:0}
+.slider-t{position:absolute;cursor:pointer;inset:0;background:#3f3f46;border-radius:24px;transition:.3s}
+.slider-t:before{content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked+.slider-t{background:var(--accent)}
+input:checked+.slider-t:before{transform:translateX(20px)}
+/* Sandbox */
+.sandbox{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+@media(max-width:900px){.sandbox{grid-template-columns:1fr}}
+.sb-panel{background:var(--panel2);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.sb-head{padding:10px 16px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+.sb-body{padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;min-height:220px;max-height:340px;overflow-y:auto;white-space:pre-wrap;line-height:1.6}
+textarea.sb-input{width:100%;min-height:220px;background:#0c0c0f;border:none;color:var(--text);padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical;outline:none;line-height:1.6}
+.btn-run{background:linear-gradient(135deg,var(--accent),var(--violet));border:none;color:#fff;padding:10px 24px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;margin-top:12px;transition:.2s}
+.btn-run:hover{box-shadow:0 0 20px rgba(59,130,246,.4)}
+/* Table */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:10px 14px;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);font-weight:700}
+.tbl td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700}
+.badge-cy{background:rgba(6,182,212,.15);color:var(--cyan);border:1px solid rgba(6,182,212,.3)}
+.badge-gr{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.badge-vi{background:rgba(139,92,246,.15);color:var(--violet);border:1px solid rgba(139,92,246,.3)}
+/* Console */
+.console{background:#0c0c0f;border:1px solid var(--border);border-radius:12px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;max-height:500px;overflow-y:auto;line-height:1.7}
+.console .ts{color:#52525b}
+.console .msg{color:var(--cyan)}
+/* Forms */
+.form-row{display:flex;gap:12px;margin-bottom:14px;align-items:end;flex-wrap:wrap}
+.form-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:180px}
+.form-group label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.form-group input,.form-group select{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--text);font-size:13px;outline:none}
+.form-group input:focus{border-color:var(--accent)}
+/* Empty */
+.empty{text-align:center;padding:40px;color:#52525b;font-size:13px}
+.empty .msi{font-size:40px;display:block;margin-bottom:10px;opacity:.4}
+/* Toggle row */
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-row .tl{font-weight:600;font-size:13px}
+.toggle-row .td{font-size:12px;color:var(--muted);margin-top:2px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="sidebar-head">
+    <div class="sidebar-logo">9R</div>
+    <div>
+      <div class="sidebar-title">9Router Proxy</div>
+      <div class="sidebar-ver" id="verLabel">v0.5.95-mod</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" data-page="dashboard"><span class="msi">hub</span>Dashboard</div>
+    <div class="nav-item" data-page="endpoint"><span class="msi">api</span>Endpoint &amp; Key</div>
+    <div class="nav-item" data-page="providers"><span class="msi">dns</span>Providers</div>
+    <div class="nav-item" data-page="combos"><span class="msi">layers</span>Combo &amp; Vision Adapter</div>
+    <div class="nav-item" data-page="usage"><span class="msi">bar_chart</span>Usage</div>
+    <div class="nav-item" data-page="quota"><span class="msi">data_usage</span>Quota Tracker</div>
+    <div class="nav-item" data-page="saver"><span class="msi">savings</span>Token Saver</div>
+    <div class="nav-item" data-page="cli"><span class="msi">terminal</span>CLI Tools</div>
+    <div class="nav-group">System</div>
+    <div class="nav-item" data-page="media"><span class="msi">perm_media</span>Media Providers</div>
+    <div class="nav-item" data-page="pools"><span class="msi">lan</span>Proxy Pools</div>
+    <div class="nav-item" data-page="skills"><span class="msi">extension</span>Skills</div>
+    <div class="nav-item" data-page="console"><span class="msi">terminal</span>Console Log</div>
+    <div class="nav-group">External</div>
+    <div class="nav-item" onclick="window.open('https://9english.net/','_blank')"><span class="msi">translate</span>9English</div>
+    <div class="nav-item" data-page="settings"><span class="msi">settings</span>Settings</div>
+  </nav>
+  <div class="sidebar-foot">
+    <span>9Router Modified</span>
+    <span class="msi" style="cursor:pointer" onclick="window.open('https://discord.gg/QtyBucygQ6','_blank')">💎</span>
+  </div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="pageTitle">Dashboard</div>
+    <div class="topbar-right">
+      <div class="icon-btn" title="Refresh" onclick="loadState()"><span class="msi">refresh</span></div>
+      <div class="icon-btn" title="Theme"><span class="msi">light_mode</span></div>
+      <div class="icon-btn" title="🇺🇸">🇺🇸</div>
+      <a href="https://discord.gg/QtyBucygQ6" target="_blank" class="icon-btn" title="Discord">💎</a>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="page active" id="page-dashboard">
+      <div class="grid4" style="margin-bottom:20px">
+        <div class="stat-card"><div class="stat-label">Total Requests</div><div class="stat-value" style="color:var(--cyan)" id="st-req">0</div><div class="stat-sub">All providers</div></div>
+        <div class="stat-card"><div class="stat-label">Tokens Saved</div><div class="stat-value" style="color:var(--green)" id="st-saved">0</div><div class="stat-sub">via TokenSaver</div></div>
+        <div class="stat-card"><div class="stat-label">Active Providers</div><div class="stat-value" style="color:var(--violet)" id="st-active">0</div><div class="stat-sub">Connected endpoints</div></div>
+        <div class="stat-card"><div class="stat-label">Saver Level</div><div class="stat-value" style="color:var(--amber)" id="st-lvl">4</div><div class="stat-sub">Aggressiveness 1-4</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="msi">savings</span>Quick TokenSaver Preview</div>
+        <div class="card-sub">Paste any prompt to see how much quota the improved saver removes.</div>
+        <div class="sandbox">
+          <div class="sb-panel">
+            <div class="sb-head"><span>Raw Input</span><span style="color:var(--red)">UNSAVED</span></div>
+            <textarea class="sb-input" id="dashInput">Sure! I would be happy to help you with that. In order to write a function:
+
+```javascript
+function add(a, b) {
+    return a + b;   
+}
+```
+
+I hope this helps! Let me know if you need anything else!</textarea>
+          </div>
+          <div class="sb-panel">
+            <div class="sb-head"><span>Saved Output</span><span style="color:var(--green)" id="dashPct">—</span></div>
+            <div class="sb-body" id="dashOutput" style="color:var(--muted)">Click "Run Saver" below.</div>
+          </div>
+        </div>
+        <button class="btn-run" onclick="runDashSaver()">⚡ Run 1000x TokenSaver</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="msi">history</span>Recent Saver Activity</div>
+        <table class="tbl"><thead><tr><th>Time</th><th>Model</th><th>Raw</th><th>Saved</th><th>%</th></tr></thead>
+        <tbody id="dashHistory"><tr><td colspan="5" class="empty">No requests yet.</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- ===== ENDPOINT & KEY ===== -->
+    <div class="page" id="page-endpoint">
+      <div class="card">
+        <div class="card-title"><span class="msi">api</span>Your Unified Endpoint</div>
+        <div class="card-sub">Point any OpenAI-compatible client here.</div>
+        <div class="form-row">
+          <div class="form-group"><label>Base URL</label><input id="epUrl" readonly></div>
+          <div class="form-group"><label>API Key</label><input id="epKey" readonly></div>
+          <div class="form-group"><label>&nbsp;</label><button class="btn-sm" onclick="copyEl('epUrl')">Copy URL</button></div>
+          <div class="form-group"><label>&nbsp;</label><button class="btn-sm" onclick="copyEl('epKey')">Copy Key</button></div>
+        </div>
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)">
+          <div style="color:var(--green);margin-bottom:6px"># Example: curl</div>
+          curl http://localhost:9900/v1/chat/completions \<br>
+          &nbsp;&nbsp;-H "Authorization: Bearer <span id="epKey2"></span>" \<br>
+          &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+          &nbsp;&nbsp;-d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"hi"}]}'
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="msi">key</span>Custom Providers (OpenAI/Anthropic Compatible)</div>
+        <div class="card-sub">Add your own compatible endpoints.</div>
+        <div class="form-row">
+          <div class="form-group"><label>Name</label><input id="cpName" placeholder="My Provider"></div>
+          <div class="form-group"><label>Base URL</label><input id="cpUrl" placeholder="https://api.example.com/v1"></div>
+          <div class="form-group"><label>Type</label><select id="cpType"><option value="openai">OpenAI Compatible</option><option value="anthropic">Anthropic Compatible</option></select></div>
+          <div class="form-group"><label>&nbsp;</label><button class="btn-add" onclick="addCustom()"><span class="msi" style="font-size:16px">add</span>Add</button></div>
+        </div>
+        <div id="customList"><div class="empty"><span class="msi">extension</span>No custom providers — use buttons above to add OpenAI/Anthropic compatible endpoints</div></div>
+      </div>
+    </div>
+
+    <!-- ===== PROVIDERS ===== -->
+    <div class="page" id="page-providers">
+      <div class="toolbar">
+        <input class="search-box" placeholder="Search providers..." id="provSearch" oninput="filterProviders()">
+        <button class="filter-btn active" data-f="all" onclick="setProvFilter(this,'all')">All</button>
+        <button class="filter-btn" data-f="active" onclick="setProvFilter(this,'active')">Active</button>
+        <button class="filter-btn" data-f="inactive" onclick="setProvFilter(this,'inactive')">Inactive</button>
+        <button class="filter-btn" data-f="none" onclick="setProvFilter(this,'none')">No connection</button>
+        <a href="https://discord.gg/QtyBucygQ6" target="_blank" class="btn-sm" style="margin-left:auto;text-decoration:none">💎 Donate</a>
+      </div>
+
+      <div class="prov-section" id="sec-custom">
+        <div class="prov-header"><h3>Custom Providers (OpenAI/Anthropic Compatible)</h3></div>
+        <div class="prov-grid" id="provCustom"></div>
+      </div>
+
+      <div class="prov-section" id="sec-oauth">
+        <div class="prov-header"><h3>OAuth Providers</h3><button class="btn-sm" onclick="testAll('oauth')">▶ Test All</button></div>
+        <div class="prov-grid" id="provOauth"></div>
+      </div>
+
+      <div class="prov-section" id="sec-free">
+        <div class="prov-header"><h3>Free Tier Providers</h3><button class="btn-sm" onclick="testAll('freeTier')">▶ Test All</button></div>
+        <div class="prov-grid" id="provFree"></div>
+      </div>
+
+      <div class="prov-section" id="sec-api">
+        <div class="prov-header"><h3>API Key Providers</h3><button class="btn-sm" onclick="testAll('apiKey')">▶ Test All</button></div>
+        <div class="prov-grid" id="provApi"></div>
+        <div style="text-align:center;margin-top:12px"><button class="btn-sm" onclick="document.getElementById('sec-api').classList.toggle('expanded')">Show all 43 providers</button></div>
+      </div>
+    </div>
+
+    <!-- ===== COMBOS ===== -->
+    <div class="page" id="page-combos">
+      <div class="card">
+        <div class="card-title"><span class="msi">layers</span>Combo &amp; Vision Adapter</div>
+        <div class="card-sub">Chain providers for fallback &amp; route vision requests to capable models.</div>
+        <div class="toggle-row"><div><div class="tl">Auto-Failover Chain</div><div class="td">Try next provider on 429/5xx errors</div></div><label class="switch"><input type="checkbox" checked><span class="slider-t"></span></label></div>
+        <div class="toggle-row"><div><div class="tl">Vision Adapter</div><div class="td">Redirect image inputs to vision-capable models automatically</div></div><label class="switch"><input type="checkbox" checked><span class="slider-t"></span></label></div>
+        <div class="toggle-row"><div><div class="tl">Latency-Based Routing</div><div class="td">Route to fastest healthy provider</div></div><label class="switch"><input type="checkbox"><span class="slider-t"></span></label></div>
+      </div>
+    </div>
+
+    <!-- ===== USAGE ===== -->
+    <div class="page" id="page-usage">
+      <div class="grid3" style="margin-bottom:20px">
+        <div class="stat-card"><div class="stat-label">Total Requests</div><div class="stat-value" style="color:var(--cyan)" id="us-req">0</div></div>
+        <div class="stat-card"><div class="stat-label">Input Tokens</div><div class="stat-value" style="color:var(--violet)" id="us-in">0</div></div>
+        <div class="stat-card"><div class="stat-label">Output Tokens</div><div class="stat-value" style="color:var(--green)" id="us-out">0</div></div>
+      </div>
+      <div class="card"><div class="card-title"><span class="msi">bar_chart</span>Request History</div>
+        <table class="tbl"><thead><tr><th>Time</th><th>Model</th><th>Raw Chars</th><th>Saved</th><th>Ratio</th></tr></thead>
+        <tbody id="usHistory"><tr><td colspan="5" class="empty">No data.</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- ===== QUOTA ===== -->
+    <div class="page" id="page-quota">
+      <div class="card">
+        <div class="card-title"><span class="msi">data_usage</span>Quota Tracker</div>
+        <div class="card-sub">Monthly token budget monitoring.</div>
+        <div style="margin:20px 0">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span>Used</span><span id="qUsed">0</span></div>
+          <div style="height:14px;background:var(--panel2);border-radius:7px;overflow:hidden;border:1px solid var(--border)">
+            <div id="qBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--violet));border-radius:7px;transition:width .5s"></div>
+          </div>
+          <div style="text-align:right;font-size:12px;color:var(--muted);margin-top:6px">Limit: <span id="qLimit">1,000,000</span> tokens</div>
+        </div>
+        <div class="toggle-row"><div><div class="tl">Hard Stop at Limit</div><div class="td">Reject requests when quota is exceeded</div></div><label class="switch"><input type="checkbox"><span class="slider-t"></span></label></div>
+        <div class="toggle-row"><div><div class="tl">Saver Reduces Quota Usage</div><div class="td">Compressed inputs count against quota at reduced rate</div></div><label class="switch"><input type="checkbox" checked><span class="slider-t"></span></label></div>
+      </div>
+    </div>
+
+    <!-- ===== TOKEN SAVER ===== -->
+    <div class="page" id="page-saver">
+      <div class="saver-hero">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <h2>⚡ 1000x Token Saver <span class="badge badge-cy" style="vertical-align:middle;margin-left:8px">IMPROVED</span></h2>
+            <p>4-level compression pipeline: conversational filler stripping, whitespace minification, code block dedup, and aggressive telegraphic reduction. Save up to 75% of your input quota on every request.</p>
+          </div>
+          <label class="switch" style="margin-top:8px"><input type="checkbox" id="saverToggle" checked onchange="updateSaver()"><span class="slider-t"></span></label>
+        </div>
+        <div class="level-bar">
+          <div class="level-btn" data-lv="1" onclick="setLevel(1)"><div class="lv">L1</div><div class="ld">Filler Stripping</div></div>
+          <div class="level-btn" data-lv="2" onclick="setLevel(2)"><div class="lv">L2</div><div class="ld">+ Whitespace Min</div></div>
+          <div class="level-btn" data-lv="3" onclick="setLevel(3)"><div class="lv">L3</div><div class="ld">+ Code Dedup</div></div>
+          <div class="level-btn active" data-lv="4" onclick="setLevel(4)"><div class="lv">L4</div><div class="ld">+ Telegraphic</div></div>
+        </div>
+      </div>
+
+      <div class="grid4" style="margin-bottom:20px">
+        <div class="stat-card"><div class="stat-label">Requests Compressed</div><div class="stat-value" style="color:var(--cyan)" id="sv-req">0</div></div>
+        <div class="stat-card"><div class="stat-label">Raw Chars</div><div class="stat-value" style="color:var(--muted)" id="sv-raw">0</div></div>
+        <div class="stat-card"><div class="stat-label">Chars Saved</div><div class="stat-value" style="color:var(--green)" id="sv-saved">0</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Reduction</div><div class="stat-value" style="color:var(--amber)" id="sv-pct">0%</div></div>
+      </div>
+
+      <div class="sandbox">
+        <div class="sb-panel">
+          <div class="sb-head"><span>Bloated Prompt</span><span style="color:var(--red)">RAW</span></div>
+          <textarea class="sb-input" id="saverInput">Sure! I would be happy to help you with that. Thank you for your patience!
+
+In order to sort this array, please find below the code:
+
+```javascript
+function sortItems(items) {
+    // Sort the array
+    return items.sort();   
+}
+```
+
+I hope this helps! Don't hesitate to reach out if you need anything else. Basically, that's how it works.</textarea>
+        </div>
+        <div class="sb-panel">
+          <div class="sb-head"><span>Compressed Output</span><span style="color:var(--green)" id="saverPct">—</span></div>
+          <div class="sb-body" id="saverOutput" style="color:var(--muted)">Click "Compress" below.</div>
+        </div>
+      </div>
+      <button class="btn-run" onclick="runSaver()">⚡ Compress with Level <span id="curLv">4</span></button>
+
+      <div class="card" style="margin-top:20px">
+        <div class="card-title"><span class="msi">savings</span>Saver History</div>
+        <table class="tbl"><thead><tr><th>Time</th><th>Model</th><th>Raw</th><th>Saved</th><th>%</th></tr></thead>
+        <tbody id="svHistory"><tr><td colspan="5" class="empty">No compressed requests yet.</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- ===== CLI TOOLS ===== -->
+    <div class="page" id="page-cli">
+      <div class="card">
+        <div class="card-title"><span class="msi">terminal</span>CLI Tools</div>
+        <div class="card-sub">Quick commands to wire your AI CLIs through 9Router Modified.</div>
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:2;color:var(--muted)">
+          <div style="color:var(--green);"># Claude Code</div>
+          export ANTHROPIC_BASE_URL="http://localhost:9900/v1"<br><br>
+          <div style="color:var(--cyan);"># OpenAI CLI / Codex</div>
+          export OPENAI_BASE_URL="http://localhost:9900/v1"<br><br>
+          <div style="color:var(--violet);"># Hermes / Generic</div>
+          export OPENAI_BASE_URL="http://localhost:9900/v1"<br>
+          export OPENAI_API_KEY="sk-9r-..."
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MEDIA PROVIDERS ===== -->
+    <div class="page" id="page-media">
+      <div class="card"><div class="card-title"><span class="msi">perm_media</span>Media Providers</div>
+        <div class="card-sub">Image / TTS / STT routing configuration.</div>
+        <div class="toggle-row"><div><div class="tl">Image Generation</div><div class="td">DALL-E / Flux via OpenAI compatible</div></div><label class="switch"><input type="checkbox" checked><span class="slider-t"></span></label></div>
+        <div class="toggle-row"><div><div class="tl">Text-to-Speech</div><div class="td">OpenAI TTS endpoint</div></div><label class="switch"><input type="checkbox" checked><span class="slider-t"></span></label></div>
+        <div class="toggle-row"><div><div class="tl">Speech-to-Text</div><div class="td">Whisper endpoint</div></div><label class="switch"><input type="checkbox"><span class="slider-t"></span></label></div>
+      </div>
+    </div>
+
+    <!-- ===== PROXY POOLS ===== -->
+    <div class="page" id="page-pools">
+      <div class="card"><div class="card-title"><span class="msi">lan</span>Proxy Pools</div>
+        <div class="card-sub">Outbound proxy rotation for rate-limit bypass.</div>
+        <div class="prov-grid" id="poolList"></div>
+      </div>
+    </div>
+
+    <!-- ===== SKILLS ===== -->
+    <div class="page" id="page-skills">
+      <div class="card"><div class="card-title"><span class="msi">extension</span>Skills</div>
+        <div class="card-sub">Plugin capabilities loaded into requests.</div>
+        <div class="prov-grid" id="skillList"></div>
+      </div>
+    </div>
+
+    <!-- ===== CONSOLE LOG ===== -->
+    <div class="page" id="page-console">
+      <div class="card"><div class="card-title"><span class="msi">terminal</span>Console Log</div>
+        <div class="card-sub">Live router event stream.</div>
+        <div class="console" id="logBox"><span class="ts">[--:--:--]</span> <span class="msg">Console cleared. Waiting for events…</span></div>
+      </div>
+    </div>
+
+    <!-- ===== SETTINGS ===== -->
+    <div class="page" id="page-settings">
+      <div class="card"><div class="card-title"><span class="msi">settings</span>Settings</div>
+        <div class="toggle-row"><div><div class="tl">Token Saver Default</div><div class="td">Apply saver to all proxy requests</div></div><label class="switch"><input type="checkbox" checked><span class="slider-t"></span></label></div>
+        <div class="toggle-row"><div><div class="tl">Console Logging</div><div class="td">Record all routing events</div></div><label class="switch"><input type="checkbox" checked><span class="slider-t"></span></label></div>
+        <div class="toggle-row"><div><div class="tl">Auto-Failover</div><div class="td">Retry with next provider on failure</div></div><label class="switch"><input type="checkbox" checked><span class="slider-t"></span></label></div>
+        <div class="toggle-row"><div><div class="tl">Dark Mode</div><div class="td">Interface theme</div></div><label class="switch"><input type="checkbox" checked><span class="slider-t"></span></label></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ---- Navigation ----
+const pages = {};
+document.querySelectorAll('.page').forEach(p => pages[p.id.replace('page-','')] = p);
+const titles = {dashboard:'Dashboard',endpoint:'Endpoint & Key',providers:'Providers',combos:'Combo & Vision Adapter',usage:'Usage',quota:'Quota Tracker',saver:'Token Saver',cli:'CLI Tools',media:'Media Providers',pools:'Proxy Pools',skills:'Skills',console:'Console Log',settings:'Settings'};
+document.querySelectorAll('.nav-item[data-page]').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    const pg = el.dataset.page;
+    Object.values(pages).forEach(p => p.classList.remove('active'));
+    if (pages[pg]) pages[pg].classList.add('active');
+    document.getElementById('pageTitle').textContent = titles[pg] || pg;
+  });
+});
+
+// ---- State ----
+let STATE = null;
+async function loadState() {
+  try {
+    const r = await fetch('/api/state');
+    STATE = await r.json();
+    renderAll();
+  } catch(e) { console.error(e); }
+}
+
+function renderAll() {
+  if (!STATE) return;
+  document.getElementById('verLabel').textContent = STATE.version;
+
+  // Dashboard stats
+  document.getElementById('st-req').textContent = STATE.usage.totalRequests;
+  document.getElementById('st-saved').textContent = STATE.saver.savedChars.toLocaleString();
+  document.getElementById('st-lvl').textContent = STATE.saver.level;
+  const active = [...STATE.oauth,...STATE.freeTier,...STATE.apiKey,...STATE.custom].filter(p=>p.status==='connected').length;
+  document.getElementById('st-active').textContent = active;
+
+  // Endpoint
+  document.getElementById('epUrl').value = STATE.endpoint.url;
+  document.getElementById('epKey').value = STATE.endpoint.key;
+  document.getElementById('epKey2').textContent = STATE.endpoint.key;
+
+  // Usage
+  document.getElementById('us-req').textContent = STATE.usage.totalRequests;
+  document.getElementById('us-in').textContent = STATE.usage.inputTokens.toLocaleString();
+  document.getElementById('us-out').textContent = STATE.usage.outputTokens.toLocaleString();
+
+  // Quota
+  const qpct = Math.min(100, (STATE.quota.used / STATE.quota.limit) * 100);
+  document.getElementById('qBar').style.width = qpct + '%';
+  document.getElementById('qUsed').textContent = STATE.quota.used.toLocaleString();
+  document.getElementById('qLimit').textContent = STATE.quota.limit.toLocaleString();
+
+  // Saver stats
+  document.getElementById('sv-req').textContent = STATE.saver.totalRequests;
+  document.getElementById('sv-raw').textContent = STATE.saver.rawChars.toLocaleString();
+  document.getElementById('sv-saved').textContent = STATE.saver.savedChars.toLocaleString();
+  document.getElementById('sv-pct').textContent = STATE.saver.rawChars > 0 ? ((STATE.saver.savedChars/STATE.saver.rawChars)*100).toFixed(1)+'%' : '0%';
+  document.getElementById('saverToggle').checked = STATE.saver.enabled;
+  setLevelUI(STATE.saver.level);
+
+  // Custom providers
+  const cl = document.getElementById('customList');
+  if (STATE.custom.length === 0) {
+    cl.innerHTML = '<div class="empty"><span class="msi">extension</span>No custom providers — use buttons above to add OpenAI/Anthropic compatible endpoints</div>';
+  } else {
+    cl.innerHTML = '<div class="prov-grid">' + STATE.custom.map(p => `
+      <div class="prov-card">
+        <div class="prov-name">${esc(p.name)} <span class="badge badge-cy" style="font-size:9px">${p.type}</span></div>
+        <div class="prov-status st-connected">${p.detail}</div>
+        <div style="margin-top:8px"><button class="btn-sm" onclick="delCustom('${p.id}')">Remove</button></div>
+      </div>`).join('') + '</div>';
+  }
+
+  // Providers
+  renderProv('provOauth', STATE.oauth);
+  renderProv('provFree', STATE.freeTier);
+  renderProv('provApi', STATE.apiKey);
+
+  // Pools & skills
+  document.getElementById('poolList').innerHTML = STATE.pools.map(p => provCardHTML(p)).join('');
+  document.getElementById('skillList').innerHTML = STATE.skills.map(p => provCardHTML(p)).join('');
+
+  // Histories
+  const hist = STATE.saver.history || [];
+  const histHTML = hist.length ? hist.slice(0,15).map(h => `<tr><td>${h.t}</td><td>${esc(h.model)}</td><td>${h.raw.toLocaleString()}</td><td style="color:var(--green)">-${h.saved}</td><td style="color:var(--cyan)">${h.pct}%</td></tr>`).join('') : '<tr><td colspan="5" class="empty">No data.</td></tr>';
+  document.getElementById('dashHistory').innerHTML = histHTML;
+  document.getElementById('usHistory').innerHTML = histHTML;
+  document.getElementById('svHistory').innerHTML = histHTML;
+
+  // Console
+  const logs = STATE.consoleLog || [];
+  document.getElementById('logBox').innerHTML = logs.length
+    ? logs.map(l => `<div><span class="ts">[${l.t}]</span> <span class="msg">${esc(l.msg)}</span></div>`).join('')
+    : '<span class="ts">[--:--:--]</span> <span class="msg">Waiting for events…</span>';
+}
+
+function provCardHTML(p) {
+  const cls = p.status === 'connected' ? 'st-connected' : p.status === 'error' ? 'st-error' : p.status === 'ready' ? 'st-ready' : 'st-none';
+  return `<div class="prov-card" onclick="testProv('${p.id}')">
+    <div class="prov-name">${esc(p.name)}</div>
+    <div class="prov-status ${cls}">${esc(p.detail||'No connections')}${p.errors?' <span style="color:var(--red)">'+esc(p.errors)+'</span>':''}</div>
+    <div class="prov-time">${p.time||''}</div>
+  </div>`;
+}
+function renderProv(id, arr) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = arr.map(provCardHTML).join('');
+}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ---- Actions ----
+let provFilter = 'all';
+function setProvFilter(btn, f) {
+  provFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterProviders();
+}
+function filterProviders() {
+  // Simple visual filter on visible cards
+  const q = (document.getElementById('provSearch').value || '').toLowerCase();
+  document.querySelectorAll('.prov-card').forEach(c => {
+    const txt = c.textContent.toLowerCase();
+    const name = c.querySelector('.prov-name');
+    const st = c.querySelector('.prov-status');
+    let show = txt.includes(q);
+    if (provFilter === 'active') show = show && st && (st.textContent.includes('Connected') || st.textContent.includes('Ready'));
+    if (provFilter === 'none') show = show && st && st.textContent.includes('No connections');
+    if (provFilter === 'inactive') show = show && st && !st.textContent.includes('Connected');
+    c.style.display = show ? '' : 'none';
+  });
+}
+async function testProv(id) {
+  await fetch('/api/test/'+id, {method:'POST'});
+  loadState();
+}
+async function testAll(cat) {
+  const arr = STATE[cat] || [];
+  for (const p of arr) { await fetch('/api/test/'+p.id, {method:'POST'}); }
+  loadState();
+}
+async function addCustom() {
+  const name = document.getElementById('cpName').value.trim();
+  const url = document.getElementById('cpUrl').value.trim();
+  const type = document.getElementById('cpType').value;
+  if (!name || !url) return alert('Name and URL required.');
+  await fetch('/api/custom', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,url,type})});
+  document.getElementById('cpName').value='';document.getElementById('cpUrl').value='';
+  loadState();
+}
+async function delCustom(id) {
+  await fetch('/api/custom/'+id, {method:'DELETE'});
+  loadState();
+}
+
+// Saver controls
+let curLevel = 4;
+function setLevelUI(lv) {
+  curLevel = lv;
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.toggle('active', +b.dataset.lv === lv));
+  const el = document.getElementById('curLv'); if (el) el.textContent = lv;
+}
+async function setLevel(lv) {
+  setLevelUI(lv);
+  await fetch('/api/saver', {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({level:lv})});
+}
+async function updateSaver() {
+  const en = document.getElementById('saverToggle').checked;
+  await fetch('/api/saver', {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:en,level:curLevel})});
+}
+// Client-side saver simulation (mirrors server logic)
+function clientSaver(text, level) {
+  if (level < 1) return text;
+  let o = text;
+  if (level >= 1) {
+    const pats = [/Sure!/gi,/Of course!/gi,/Certainly!/gi,/As an AI language model/gi,/I would be happy to help(?: you)?(?: with that)?(?:\.)?/gi,/I hope this helps!/gi,/Let me know if you need anything else[.!?]?/gi,/Don't hesitate to reach out[.!?]?/gi,/Feel free to ask(?: any(?:thing)? (?:more|else))?/gi,/In order to/gi,/Due to the fact that/gi,/Please find below/gi,/As mentioned previously/gi,/I hope you are doing well[.!?]?/gi,/Thank you for your (?:patience|question)[.!?]?/gi,/Great question!/gi,/That's a great point\./gi];
+    pats.forEach(rx => o = o.replace(rx, ''));
+  }
+  if (level >= 2) { o = o.replace(/[ \t]+/g, ' '); o = o.replace(/\n{3,}/g, '\n\n'); }
+  if (level >= 3) { o = o.replace(/(```[\s\S]*?```)/g, m => m.replace(/[ \t]+$/gm,'').replace(/\n{2,}/g,'\n')); o = o.replace(/^(.*)\n\1$/gm, '$1'); }
+  if (level >= 4) { o = o.replace(/\b(basically|literally|essentially|obviously|clearly|actually|really)\b\s*/gi, ''); o = o.replace(/\b(please|kindly)\s+/gi, ''); o = o.replace(/\s{2,}/g, ' '); }
+  return o.trim();
+}
+function runDashSaver() {
+  const input = document.getElementById('dashInput').value;
+  const out = clientSaver(input, curLevel);
+  const pct = input.length > 0 ? (((input.length - out.length) / input.length) * 100).toFixed(1) : '0.0';
+  document.getElementById('dashOutput').textContent = out;
+  document.getElementById('dashOutput').style.color = 'var(--text)';
+  document.getElementById('dashPct').textContent = `-${pct}% QUOTA`;
+}
+function runSaver() {
+  const input = document.getElementById('saverInput').value;
+  const out = clientSaver(input, curLevel);
+  const pct = input.length > 0 ? (((input.length - out.length) / input.length) * 100).toFixed(1) : '0.0';
+  document.getElementById('saverOutput').textContent = out;
+  document.getElementById('saverOutput').style.color = 'var(--text)';
+  document.getElementById('saverPct').textContent = `-${pct}% QUOTA SAVED`;
+}
+function copyEl(id) {
+  const el = document.getElementById(id);
+  if (el) { navigator.clipboard.writeText(el.value || el.textContent).catch(()=>{}); }
+}
+
+// Init
+loadState();
+setInterval(loadState, 4000);
+</script>
+</body>
+</html>

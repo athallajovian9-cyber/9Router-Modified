@@ -1,0 +1,13 @@
+{
+  "name": "9router-modified",
+  "version": "0.5.95",
+  "description": "9Router Modified - AI Infrastructure Management with 1000x improved TokenSaver",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "author": "Athalla Jovian",
+  "license": "MIT"
+}
