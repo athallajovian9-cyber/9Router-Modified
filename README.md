@@ -39,6 +39,15 @@ Toggle on/off per-request. Applied transparently to every `/v1/chat/completions`
 ---
 
 ## 🚀 Quick Start
+
+### Global CLI Command (CMD & PowerShell)
+```bash
+# Type anywhere in CMD or PowerShell:
+9router-modified
+```
+This resolves to `C:\Users\RDC\bin\9router-modified.cmd`, starts the proxy server **silently hidden** (no console flash), and opens the dashboard at `http://localhost:9900`. If the server is already running, it just opens the dashboard instantly.
+
+### Manual Start
 ```bash
 # Launch dashboard at http://localhost:9900
 START_9ROUTER.bat
